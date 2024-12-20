@@ -1,0 +1,163 @@
+const express = require('express');
+const router = express.Router();
+const Game = require('../schemas/game');
+const mongoose = require('mongoose');
+
+const multer = require('multer');
+const upload = multer();  // This will handle form-data (non-file data)
+
+
+// Insert a new game record
+router.post('/', upload.none(), async (req, res) => {
+    try {
+        const { username, userid, magicnumber, attempts } = req.body;
+
+        // Validate input
+        if (!username || !userid || !magicnumber) {
+            return res.status(400).json({ message: 'Username, User ID, and Magic Number are required.' });
+        }
+
+        // Validate that magicnumber is a 5-digit number
+        if (!/^\d{5}$/.test(magicnumber)) {
+            return res.status(400).json({ message: 'Magic Number must be exactly 5 digits.' });
+        }
+
+        // Ensure attempts is static and always set to 5
+        const fixedAttempts = 5;
+
+        // Create a new game entry
+        const newGame = new Game({
+            username,
+            userid,  // Store userid as a simple string (no need for ObjectId)
+            magicnumber,
+            attempts: fixedAttempts  // Always set attempts to 5
+        });
+
+        // Save the new game entry
+        await newGame.save();
+
+        res.status(201).json({
+            message: 'Game entry created successfully!',
+            game: newGame
+        });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+router.post('/checkMagicNumber', upload.none(), async (req, res) => {
+    try {
+        const { magicnumber } = req.body;  // Extract magicnumber from form data
+
+        if (!magicnumber) {
+            return res.status(400).json({ message: 'Magic number is required.' });
+        }
+
+        // Find a game with the matching magicnumber
+        const game = await Game.findOne({ magicnumber: magicnumber });
+
+        if (game) {
+            // If a match is found, return success message
+            return res.status(200).json({ message: 'Magic number is correct!' });
+        } else {
+            // If no match is found, return failure message
+            return res.status(400).json({ message: 'Please try again.' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error, please try again later.' });
+    }
+});
+
+
+
+router.get('/', async (req, res) => {
+    try {
+        // Retrieve all game records from the database
+        const games = await Game.find();
+
+        if (games.length === 0) {
+            return res.status(404).json({ message: 'No games found.' });
+        }
+
+        // Add dynamic hint field to each game record
+        const gamesWithHints = games.map(game => {
+            // Extract two random digits from the magicnumber string
+            const magicNumberString = game.magicnumber.toString();
+            const randomIndexes = [Math.floor(Math.random() * magicNumberString.length), Math.floor(Math.random() * magicNumberString.length)];
+
+            // Get the two digits from random positions
+            const hint = magicNumberString[randomIndexes[0]] + magicNumberString[randomIndexes[1]];
+
+            // Return the game object with the hint field
+            return {
+                ...game._doc,  // Spread the original game object
+                hint: hint     // Add the new 'hint' field
+            };
+        });
+
+        // Send the response with the games and their hints
+        res.status(200).json({
+            message: 'All game records retrieved successfully.',
+            games: gamesWithHints
+        });
+
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
+// Get game records by User ID
+// POST route to get game(s) by User ID (using form data)
+router.post('/getonegame', upload.none(), async (req, res) => {
+    try {
+        const { userid } = req.body;  // Access the userid from form data
+
+        // Validate that the userid is provided
+        if (!userid) {
+            return res.status(400).json({ message: 'User ID is required.' });
+        }
+
+        // Retrieve game records that match the given userid
+        const games = await Game.find({ userid });
+
+        if (games.length === 0) {
+            return res.status(404).json({ message: `No games found for User ID: ${userid}.` });
+        }
+
+        res.status(200).json({
+            message: `Game records for User ID: ${userid} retrieved successfully.`,
+            games: games
+        });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+// DELETE route to delete a game by its ID
+router.delete('/delete/:id', async (req, res) => {
+    try {
+        const gameId = req.params.id;  // Retrieve game ID from URL parameter
+
+        // Validate the ID to check if it's a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(gameId)) {
+            return res.status(400).json({ message: 'Invalid game ID.' });
+        }
+
+        // Find and delete the game entry by its ID
+        const deletedGame = await Game.findByIdAndDelete(gameId);
+
+        if (!deletedGame) {
+            return res.status(404).json({ message: 'Game not found.' });
+        }
+
+        res.status(200).json({ message: 'Game entry deleted successfully.' });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
+
+
+module.exports = router;
