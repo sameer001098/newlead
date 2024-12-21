@@ -26,14 +26,15 @@ router.post('/', upload.none(), async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials.' });
         }
 
-        // Login successful, return a success message and the user data (excluding sensitive information)
+        // Login successful, return a success message and the user data (including userid)
         res.status(200).json({
             message: 'Login successful!',
             user: {
                 fullname: user.fullname,
                 email: user.email,
                 phone: user.phone,
-                role: user.role
+                role: user.role,
+                userid: user._id // Add the user ID to the response
             }
         });
     } catch (error) {
@@ -41,6 +42,7 @@ router.post('/', upload.none(), async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
+
 
 router.post('/superadmin', async (req, res) => {
     try {

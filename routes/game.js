@@ -22,13 +22,51 @@ const upload = multer({ storage: storage });
 
 
 // Insert a new game record
+// router.post('/', upload.none(), async (req, res) => {
+//     try {
+//         const { username, userid, magicnumber, attempts } = req.body;
+
+//         // Validate input
+//         if (!username || !userid || !magicnumber) {
+//             return res.status(400).json({ message: 'Username, User ID, and Magic Number are required.' });
+//         }
+
+//         // Validate that magicnumber is a 5-digit number
+//         if (!/^\d{5}$/.test(magicnumber)) {
+//             return res.status(400).json({ message: 'Magic Number must be exactly 5 digits.' });
+//         }
+
+//         // Ensure attempts is static and always set to 5
+//         const fixedAttempts = 5;
+
+//         // Create a new game entry
+//         const newGame = new Game({
+//             username,
+//             userid,  // Store userid as a simple string (no need for ObjectId)
+//             magicnumber,
+//             attempts: fixedAttempts  // Always set attempts to 5
+//         });
+
+//         // Save the new game entry
+//         await newGame.save();
+
+//         res.status(201).json({
+//             message: 'Game entry created successfully!',
+//             game: newGame
+//         });
+//     } catch (error) {
+//         res.status(400).json({ message: error.message });
+//     }
+// });
+
 router.post('/', upload.none(), async (req, res) => {
     try {
-        const { username, userid, magicnumber, attempts } = req.body;
+        // Destructure the new fields from the request body
+        const { username, name, prize, userid, magicnumber, hint, attempts } = req.body;
 
         // Validate input
-        if (!username || !userid || !magicnumber) {
-            return res.status(400).json({ message: 'Username, User ID, and Magic Number are required.' });
+        if (!username || !name || !prize || !userid || !magicnumber || !hint || !attempts) {
+            return res.status(400).json({ message: 'Username, Name, Prize, User ID, Magic Number, Hint, and Attempts are required.' });
         }
 
         // Validate that magicnumber is a 5-digit number
@@ -36,15 +74,15 @@ router.post('/', upload.none(), async (req, res) => {
             return res.status(400).json({ message: 'Magic Number must be exactly 5 digits.' });
         }
 
-        // Ensure attempts is static and always set to 5
-        const fixedAttempts = 5;
-
-        // Create a new game entry
+        // Create a new game entry with the updated fields
         const newGame = new Game({
             username,
-            userid,  // Store userid as a simple string (no need for ObjectId)
-            magicnumber,
-            attempts: fixedAttempts  // Always set attempts to 5
+            name,         // Store player's name
+            prize,        // Store prize
+            userid,       // Store user ID
+            magicnumber,  // Store magic number
+            hint,         // Store hint
+            attempts      // Store attempts
         });
 
         // Save the new game entry
@@ -58,6 +96,7 @@ router.post('/', upload.none(), async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
+
 
 router.post('/checkMagicNumber', upload.none(), async (req, res) => {
     try {
@@ -102,7 +141,7 @@ router.post('/verify-magicnumber', upload.single('file'), async (req, res) => {
 
         // Check if the game exists
         if (!game) {
-            return res.status(404).json({ message: 'Game not found with the provided _id.' });
+            return res.status(400).json({ message: 'The _id does not match. Please try again.' });
         }
 
         // Check if the magicnumber is correct
@@ -121,6 +160,7 @@ router.post('/verify-magicnumber', upload.single('file'), async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 
 
@@ -190,9 +230,14 @@ router.post('/getonegame', upload.none(), async (req, res) => {
 });
 
 // DELETE route to delete a game by its ID
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/delete', upload.none(), async (req, res) => {
     try {
-        const gameId = req.params.id;  // Retrieve game ID from URL parameter
+        const { gameId } = req.body;  // Retrieve game ID from form-data
+
+        // Validate that the gameId is provided
+        if (!gameId) {
+            return res.status(400).json({ message: 'Game ID is required in form-data.' });
+        }
 
         // Validate the ID to check if it's a valid ObjectId
         if (!mongoose.Types.ObjectId.isValid(gameId)) {

@@ -3,13 +3,24 @@ const mongoose = require('mongoose');
 const gameSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
+      
     },
+    name : {
+        type : String
+    },
+    prize : {
+        type : String
+    },
+
     userid: {
         type: String, 
         required: true,
     },
     magicnumber: {
+        type: String,
+        required: true
+    },
+    hint: {
         type: String,
         required: true
     },
