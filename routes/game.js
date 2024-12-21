@@ -4,7 +4,21 @@ const Game = require('../schemas/game');
 const mongoose = require('mongoose');
 
 const multer = require('multer');
-const upload = multer();  // This will handle form-data (non-file data)
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        // Set the upload directory
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        // Set the filename of the uploaded file
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
+// const upload = multer();  
+
+
 
 
 // Insert a new game record
@@ -67,6 +81,47 @@ router.post('/checkMagicNumber', upload.none(), async (req, res) => {
         res.status(500).json({ message: 'Server error, please try again later.' });
     }
 });
+
+// POST route to verify magic number and handle form data
+router.post('/verify-magicnumber', upload.single('file'), async (req, res) => {
+    try {
+        const { _id, magicnumber } = req.body;  // Extract _id and magicnumber from the form data
+
+        // Validate input
+        if (!_id || !magicnumber) {
+            return res.status(400).json({ message: 'Both _id and magicnumber are required.' });
+        }
+
+        // Check if a file was uploaded
+        if (req.file) {
+            console.log('File uploaded:', req.file);  // Log the uploaded file info (you can process it further if needed)
+        }
+
+        // Find the game by _id
+        const game = await Game.findById(_id);
+
+        // Check if the game exists
+        if (!game) {
+            return res.status(404).json({ message: 'Game not found with the provided _id.' });
+        }
+
+        // Check if the magicnumber is correct
+        if (game.magicnumber === magicnumber) {
+            return res.status(200).json({
+                message: 'Magic number is correct! You have won the reward.',
+                game: game
+            });
+        } else {
+            return res.status(400).json({
+                message: 'Magic number is incorrect. Please try again.'
+            });
+        }
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 
 
