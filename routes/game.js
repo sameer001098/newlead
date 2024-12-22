@@ -229,6 +229,33 @@ router.post('/getonegame', upload.none(), async (req, res) => {
     }
 });
 
+router.post('/getgamebyid', upload.none(), async (req, res) => {
+    try {
+        const { _id } = req.body;  // Access the _id from form data
+
+        // Validate that the _id is provided
+        if (!_id) {
+            return res.status(400).json({ message: '_id is required.' });
+        }
+
+        // Retrieve the game by _id
+        const game = await Game.findById(_id);
+
+        // Check if the game exists
+        if (!game) {
+            return res.status(404).json({ message: `Game not found with _id: ${_id}.` });
+        }
+
+        // Return the found game
+        res.status(200).json({
+            message: `Game with _id: ${_id} retrieved successfully.`,
+            game: game
+        });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
 // DELETE route to delete a game by its ID
 router.delete('/delete', upload.none(), async (req, res) => {
     try {
