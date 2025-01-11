@@ -38,7 +38,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on http://0.0.0.0:${PORT}`);
+    console.log(`Server is running on https://0.0.0.0:${PORT}`);
 });
 
 // app.listen(PORT, () => {
