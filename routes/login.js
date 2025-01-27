@@ -4,8 +4,6 @@ const router = express.Router();
 const upload = multer();
 const Register = require('../schemas/register');
 
-
-// Login user
 router.post('/', upload.none(), async (req, res) => {
     try {
         const { email, password } = req.body;

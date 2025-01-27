@@ -121,7 +121,7 @@ router.post('/checkMagicNumber', upload.none(), async (req, res) => {
     }
 });
 
-// POST route to verify magic number and handle form data
+
 router.post('/verify-magicnumber', upload.single('file'), async (req, res) => {
     try {
         const { _id, magicnumber } = req.body;  // Extract _id and magicnumber from the form data
@@ -202,8 +202,7 @@ router.get('/', async (req, res) => {
 });
 
 
-// Get game records by User ID
-// POST route to get game(s) by User ID (using form data)
+
 router.post('/getonegame', upload.none(), async (req, res) => {
     try {
         const { userid } = req.body;  // Access the userid from form data
@@ -256,7 +255,7 @@ router.post('/getgamebyid', upload.none(), async (req, res) => {
     }
 });
 
-// DELETE route to delete a game by its ID
+
 router.delete('/delete', upload.none(), async (req, res) => {
     try {
         const { gameId } = req.body;  // Retrieve game ID from form-data
