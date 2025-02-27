@@ -167,7 +167,7 @@ router.post('/', upload.none(), async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
-// Update a specific user by ID (id will be passed via form-data)
+
 router.put('/update', upload.none(), async (req, res) => {
     console.log(req.body); // Log the request body to check if the data is correct
 
@@ -237,7 +237,38 @@ router.put('/update', upload.none(), async (req, res) => {
     }
 });
 
-module.exports = router;
+
+router.post('/delete', async (req, res) => {
+    console.log(req.body); // Log the request body to see if _id is passed correctly
+    try {
+        const { _id } = req.body;
+
+        if (!_id) {
+            return res.status(400).json({ message: 'User ID is required.' });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(_id)) {
+            return res.status(400).json({ message: 'Invalid ID format.' });
+        }
+
+        const user = await Register.findById(_id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        await Register.deleteOne({ _id });
+
+        res.status(200).json({ message: 'User deleted successfully.' });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+
 
 
 module.exports = router;
+
+
+
